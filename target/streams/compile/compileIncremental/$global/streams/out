@@ -17,7 +17,7 @@
 [0m[[0minfo[0m] [0mCompiling 1 Scala source to /home/sokupa/workspace/Chord/target/scala-2.10/classes...[0m
 [0m[[0mdebug[0m] [0mGetting compiler-interface from component compiler for Scala 2.10.1[0m
 [0m[[0mdebug[0m] [0mGetting compiler-interface from component compiler for Scala 2.10.1[0m
-[0m[[0mdebug[0m] [0mRunning cached compiler 26fd24f6, interfacing (CompilerInterface) with Scala compiler version 2.10.1[0m
+[0m[[0mdebug[0m] [0mRunning cached compiler 3aed5f9c, interfacing (CompilerInterface) with Scala compiler version 2.10.1[0m
 [0m[[0mdebug[0m] [0mCalling Scala compiler with arguments  (CompilerInterface):[0m
 [0m[[0mdebug[0m] [0m	-bootclasspath[0m
 [0m[[0mdebug[0m] [0m	/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/resources.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/rt.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/sunrsasign.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/jsse.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/jce.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/charsets.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/rhino.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/jfr.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/classes:/home/sokupa/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.10.1.jar[0m
@@ -26,21 +26,14 @@
 [0m[[33mwarn[0m] [0m/home/sokupa/workspace/Chord/src/main/scala/project3.scala:74: patterns after a variable pattern cannot match (SLS 8.1.1)[0m
 [0m[[33mwarn[0m] [0m      case createNetwork=>{[0m
 [0m[[33mwarn[0m] [0m           ^[0m
-[0m[[33mwarn[0m] [0m/home/sokupa/workspace/Chord/src/main/scala/project3.scala:87: unreachable code due to variable pattern 'createNetwork' on line 74[0m
+[0m[[33mwarn[0m] [0m/home/sokupa/workspace/Chord/src/main/scala/project3.scala:89: unreachable code due to variable pattern 'createNetwork' on line 74[0m
 [0m[[33mwarn[0m] [0m      case joined => {[0m
 [0m[[33mwarn[0m] [0m                     ^[0m
-[0m[[33mwarn[0m] [0m/home/sokupa/workspace/Chord/src/main/scala/project3.scala:99: unreachable code due to variable pattern 'createNetwork' on line 74[0m
+[0m[[33mwarn[0m] [0m/home/sokupa/workspace/Chord/src/main/scala/project3.scala:102: unreachable code due to variable pattern 'createNetwork' on line 74[0m
 [0m[[33mwarn[0m] [0m      case _ => [0m
 [0m[[33mwarn[0m] [0m             ^[0m
 [0m[[33mwarn[0m] [0mthree warnings found[0m
-[0m[[0mdebug[0m] [0mScala compilation took 22.761527229 s[0m
-[0m[[0mdebug[0m] [0mInvalidating /home/sokupa/workspace/Chord/src/main/scala/project3.scala...[0m
-[0m[[0mdebug[0m] [0mInvalidating (transitively) by inheritance from /home/sokupa/workspace/Chord/src/main/scala/project3.scala...[0m
-[0m[[0mdebug[0m] [0mInitial set of included nodes: Set(/home/sokupa/workspace/Chord/src/main/scala/project3.scala)[0m
-[0m[[0mdebug[0m] [0mInvalidated by transitive inheritance dependency: Set(/home/sokupa/workspace/Chord/src/main/scala/project3.scala)[0m
-[0m[[0mdebug[0m] [0mThe /home/sokupa/workspace/Chord/src/main/scala/project3.scala source file has the following regular definitions changed:[0m
-[0m[[0mdebug[0m] [0m	Successor, Predecessor.[0m
-[0m[[0mdebug[0m] [0mAll member reference dependencies will be considered within this context.[0m
+[0m[[0mdebug[0m] [0mScala compilation took 22.106271727 s[0m
 [0m[[0mdebug[0m] [0mNew invalidations:[0m
 [0m[[0mdebug[0m] [0m	Set()[0m
 [0m[[0mdebug[0m] [0mInitial set of included nodes: Set()[0m

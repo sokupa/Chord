@@ -20,12 +20,12 @@ object start extends App{
        println("Input in format <numofnodes> < numRequest>")
   }
   object Global {
-     var nodemap = new HashMap[Int, ActorRef]
-     val m_maxnodes = 1024
+     var nodemap = new HashMap[Long, ActorRef]
+     val m_maxnodes = math.pow(2,14)
      }
 
 
-class Peer(nodeId:Int)extends Actor{
+class Peer(nodeId:Long)extends Actor{
      var fingertable = new Array[ActorRef](7) //2 ^ m  m =7
      var Successor:Int = -1
      var Predecessor:Int = -1
@@ -68,27 +68,30 @@ class Peer(nodeId:Int)extends Actor{
    // val starttime = system.currentTimeMillis()
     var numjoined:Int = 0
    
-    var nodeid : Int = 0
+    var nodeid : Long = 0
     var node:ActorRef = null
-     def receive = {
+    def receive = {
       case createNetwork=>{
           println("Network create initiating \n")
-          for( i<-0 to numofnodes){
+          for( i<-1 to numofnodes){
             nodeid = consistenthash(i)                   
-             node = system.actorOf(Props(new Peer(nodeid)),"Peer")
+             node = system.actorOf(Props(new Peer(nodeid)))
             Global.nodemap.put(nodeid,node)
+            println("\n i"+i)
 
             if(i == 0)
                node ! "Firstjoin"
             else
-               node ! "join"   
+               node ! "join"  
+               //i = i+1 
                } 
              }
       case joined => {
-           numjoined = numofnodes + 1
+           numjoined = numjoined + 1
            if(numjoined == numofnodes){
                  //for (peer <- Global.nodemap.ActorRef) {
           var msg: String = "hello"
+          system.shutdown()
          // peer ! startRouting(msg)
        // }
         }
@@ -98,17 +101,37 @@ class Peer(nodeId:Int)extends Actor{
  
       case _ => 
     }
-   def consistenthash(index:Int): Int={
-    var index1:String = "1"
+   def consistenthash(index:Int): Long={
+    var index1:String = index.toString
     var sha:String = ""
     sha = MessageDigest.getInstance("SHA-1").digest(index1.getBytes("UTF-8")).map("%02x".format(_)).mkString
+//val res:Array[Byte]  = sha.getBytes()
+   val res:Long = Parsefirstmbits(sha)
+    println(res)
     println(sha)
-   // sha = sha.toInt
+    //res:Int = Integer.parseInt(sha);
+    //sha = sha.toInt
     //sha = sha & (0xFE<<18)
     //println(sha)
    // return sha  
-   return 0
+   return res
  }
+   def Parsefirstmbits(sha:String):Long={
+   // val minbits =  //math.floor(Global.m_maxnodes/16)
+    val loop:Int = 4 //(minbits/4).toInt
+   // var mask = Global.m_maxnodes & (Global.m_maxnodes -1)
+    println(loop)
+   // mask = generatemask(numofnodes)
+    var res: Long = 0
+    for(i<-0 to loop-1)
+       res = (res << 4 ) | Character.digit(sha.charAt(i), 16);
+    res = res >> 2
+    res = res & 0xFFFC /*Fetching first 14 bits in resultant string*/
+    println(res)
+    return res
+
+   }
+
  }
 
 
