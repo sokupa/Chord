@@ -102,6 +102,7 @@ class Peer(nodeId:Int)extends Actor{
     var index1:String = "1"
     var sha:String = ""
     sha = MessageDigest.getInstance("SHA-1").digest(index1.getBytes("UTF-8")).map("%02x".format(_)).mkString
+    println(sha)
    // sha = sha.toInt
     //sha = sha & (0xFE<<18)
     //println(sha)
