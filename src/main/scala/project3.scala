@@ -3,7 +3,14 @@ import java.security.MessageDigest
 import scala.util.Random
 import akka.actor.PoisonPill
 import scala.collection.mutable.HashMap
-
+import scala.collection.mutable.HashMap
+import scala.collection.immutable.TreeMap
+import scala.collection.immutable.List
+import akka.util.Timeout
+case class set_Successor(succ: ActorRef)
+case class set_Predecessor(pred:ActorRef)
+case class fetch(succ:ActorRef , pred:ActorRef , curr :ActorRef)
+case class joined()
 
 object start extends App{
 
@@ -22,39 +29,61 @@ object start extends App{
   object Global {
      var nodemap = new HashMap[Long, ActorRef]
      val m_maxnodes = math.pow(2,14)
+     val max_len =14
      }
+
+/********************************************************************************************************************************************
+***********************************************Class Peer**********************************************************************************
+*Functions: *****************************Simulation of Chord join leave  ******************************************************
+*join : returns neighbour of current node in line topology
+*leave:returns neigbour for 3D and 3D imperfect topology check3dimp distinguishes both
+*Bootstrap() : Retries after fixed instance of time
+*getSuccessor():
+*getPredecessor():
+ *********************************************************************************************************************************************
+*********************************************************************************************************************************************/
 
 
 class Peer(nodeId:Long)extends Actor{
-     var fingertable = new Array[ActorRef](7) //2 ^ m  m =7
-     var Successor:Int = -1
-     var Predecessor:Int = -1
+     var fingertable = new Array[ActorRef](14) //2 ^ m  m =7
+     var Successor:ActorRef = null
+     var Predecessor:ActorRef = null
      def receive = {
       case "Firstjoin" =>{
           println("First Node Joined \n")
-          sender ! "joined"
+          sender ! joined()
         }
-      case "join" =>{}
+      case "join" =>{
+       
+        update_self()
+        update_others()
+        sender ! joined()
+      }
+
+      case set_Successor (succ:ActorRef)=>
+          Successor = succ
+      case set_Predecessor (pred:ActorRef)=>
+          Predecessor = pred
+
       case _=>
      }
-     def iniatialize()={
-    //  Successor = -1
-    //  Predecessor = -1
-
+     def initialize()={
       for(i<-0 to 7)
       {
        fingertable(i) = null 
       }      
      }
-    def getSuccessor(nodeId:Int):Int={
-     // Successor = 0
-
-      return 0
-
+     def update_self():Unit={
+          println (self)
+          sender ! fetch(Successor,Predecessor,self)
+         for(i<-1 to Global.max_len){
+          
+         }
+         
+        // Predecessor ! set_Successor(self)
+        // Successor ! set_Predecessor (self)
      }
-     def getPredecessor(nodeId:Int):Int={
-     // Predecessor = 0
-      return 0
+     def update_others():Unit={
 
      }
   }
@@ -70,34 +99,45 @@ class Peer(nodeId:Long)extends Actor{
    
     var nodeid : Long = 0
     var node:ActorRef = null
+    var nodesMap = new HashMap[String,ActorRef]
+    var nodeIdList = new Array[String](numberOfNodes)
+    var sortedNodeList = List.empty[String]
+    var totalHopCount = 0.0f
+    var aggregate = 0.0f
+    var averageHopCount = 0.0f
+  
     def receive = {
-      case createNetwork=>{
+      case "createNetwork"=>{
           println("Network create initiating \n")
           for( i<-1 to numofnodes){
             nodeid = consistenthash(i)                   
              node = system.actorOf(Props(new Peer(nodeid)))
             Global.nodemap.put(nodeid,node)
-            println("\n i"+i)
+            //println("\n i"+i)
 
-            if(i == 0)
+            if(i == 1)
                node ! "Firstjoin"
             else
                node ! "join"  
                //i = i+1 
                } 
              }
-      case joined => {
+      case joined() => {
            numjoined = numjoined + 1
+           println("joined")
            if(numjoined == numofnodes){
                  //for (peer <- Global.nodemap.ActorRef) {
           var msg: String = "hello"
-          system.shutdown()
+         // system.shutdown()
          // peer ! startRouting(msg)
        // }
         }
       }
 
-      //case "routingfinished"=>{}
+     case fetch(successor :ActorRef , predecessor :ActorRef, from :ActorRef)=>{
+      println("Inside fetch")
+
+     }
  
       case _ => 
     }
@@ -105,15 +145,8 @@ class Peer(nodeId:Long)extends Actor{
     var index1:String = index.toString
     var sha:String = ""
     sha = MessageDigest.getInstance("SHA-1").digest(index1.getBytes("UTF-8")).map("%02x".format(_)).mkString
-//val res:Array[Byte]  = sha.getBytes()
+
    val res:Long = Parsefirstmbits(sha)
-    println(res)
-    println(sha)
-    //res:Int = Integer.parseInt(sha);
-    //sha = sha.toInt
-    //sha = sha & (0xFE<<18)
-    //println(sha)
-   // return sha  
    return res
  }
    def Parsefirstmbits(sha:String):Long={
@@ -136,14 +169,3 @@ class Peer(nodeId:Long)extends Actor{
 
 
 
-
-/********************************************************************************************************************************************
-***********************************************Class Peer**********************************************************************************
-*Functions: *****************************Simulation of Chord join leave  ******************************************************
-*join : returns neighbour of current node in line topology
-*leave:returns neigbour for 3D and 3D imperfect topology check3dimp distinguishes both
-*Bootstrap() : Retries after fixed instance of time
-*getSuccessor():
-*getPredecessor():
- *********************************************************************************************************************************************
-*********************************************************************************************************************************************/
