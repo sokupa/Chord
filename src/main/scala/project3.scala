@@ -11,6 +11,10 @@ case class set_Successor(succ: ActorRef)
 case class set_Predecessor(pred:ActorRef)
 case class fetch(succ:ActorRef , pred:ActorRef , curr :ActorRef)
 case class joined()
+case class Join(asknode:ActorRef,nodeid : Long)
+case class Firstjoin(nodeid : Long)
+case class locateNode(nodetobefound:ActorRef,nodeid:Long)
+case class nodeLocated(predecessor:ActorRef,successor:ActorRef)
 
 object start extends App{
 
@@ -45,20 +49,41 @@ object start extends App{
 
 
 class Peer(nodeId:Long)extends Actor{
-     var fingertable = new Array[ActorRef](14) //2 ^ m  m =7
+     var fingertable = new Array[FingerTable](14) //2 ^ m  m =7
      var Successor:ActorRef = null
      var Predecessor:ActorRef = null
+     var nodeID : Long = 0
      def receive = {
-      case "Firstjoin" =>{
+      case Firstjoin(nodeid : Long) =>{
           println("First Node Joined \n")
+          this.nodeID = nodeid
           sender ! joined()
         }
-      case "join" =>{
+      case Join(asknode:ActorRef,nodeid : Long) =>{
+        this.nodeID = nodeId
+        asknode!locateNode(self,nodeid)
        
         update_self()
         update_others()
         sender ! joined()
       }
+
+      case locateNode(nodetobefound:ActorRef,nodeid:Long)=>{
+        if(chekfingertable(nodeid)){
+          nodetobefound ! nodeLocated(self,this.Successor)
+        }
+        else{
+        var nextnode : ActorRef = closest_preceding_successor(nodeid)
+          nextnode!locateNode(nodetobefound,nodeid)
+       }
+     }
+
+      case nodeLocated(predecessor:ActorRef,successor:ActorRef)=>{
+          this.Predecessor=predecessor
+          this.Successor=successor
+          predecessor!set_Successor(self)//Add by myself
+          successor!set_Predecessor(self)
+        }
 
       case set_Successor (succ:ActorRef)=>
           Successor = succ
@@ -86,7 +111,15 @@ class Peer(nodeId:Long)extends Actor{
      def update_others():Unit={
 
      }
-  }
+     def chekfingertable(nodeID: Long):Boolean={
+        return true//To DO
+     }
+    def closest_preceding_successor(nodeid:Long) : ActorRef = {
+       // for(i <- m-1 to 0 by -1){
+        return self //to Do 
+   
+   }
+}
 
 /************************************************************************************/
   class ChordNetwork(numofnodes:Int , numRequest: Int ) extends Actor {
@@ -97,28 +130,33 @@ class Peer(nodeId:Long)extends Actor{
    // val starttime = system.currentTimeMillis()
     var numjoined:Int = 0
    
-    var nodeid : Long = 0
+    var nodeID : Long = 0
     var node:ActorRef = null
     var nodesMap = new HashMap[String,ActorRef]
-    var nodeIdList = new Array[String](numberOfNodes)
+    var nodeIDList = new Array[String](numofnodes)
     var sortedNodeList = List.empty[String]
     var totalHopCount = 0.0f
     var aggregate = 0.0f
     var averageHopCount = 0.0f
-  
+    var refnode : ActorRef = null;
     def receive = {
       case "createNetwork"=>{
           println("Network create initiating \n")
           for( i<-1 to numofnodes){
-            nodeid = consistenthash(i)                   
-             node = system.actorOf(Props(new Peer(nodeid)))
-            Global.nodemap.put(nodeid,node)
+            nodeID = consistenthash(i)                   
+             node = system.actorOf(Props(new Peer(nodeID)))
+            //Global.nodemap.put(nodeid,node)
+            if(i>0)
+
             //println("\n i"+i)
 
             if(i == 1)
-               node ! "Firstjoin"
+            {
+               val refnode:ActorRef = node;
+               node ! Firstjoin(nodeID)
+            }
             else
-               node ! "join"  
+               node ! Join(refnode,nodeID)  
                //i = i+1 
                } 
              }
@@ -167,5 +205,31 @@ class Peer(nodeId:Long)extends Actor{
 
  }
 
+
+class FingerTable(begin: BigInt, range: Range, var node:ActorRef){
+/*
+  def getStart(): BigInt = {
+    return this.start
+  }
+  def getRange(): Range = {
+    return this.range
+  }
+  def getNode(): ActorRef = {
+    return this.node
+  }
+  def getHash():BigInt ={
+    //return BigInt.apply(node.toString().sha1.hex,16)
+    (node.toString.charAt(25)-48).toInt
+  }
+  def setNode(newNode:ActorRef):Unit ={
+    this.node=newNode
+  }
+
+  def print:String={
+    return ("Start: %s, End: %s, Node: %s".format(start,range.getEnd,getHash()))
+  }
+*/
+
+}; 
 
 
