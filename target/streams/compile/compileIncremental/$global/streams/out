@@ -17,19 +17,19 @@
 [0m[[0minfo[0m] [0mCompiling 1 Scala source to /home/priyanshu/Scala_Workspace/Chord/Chord/target/scala-2.10/classes...[0m
 [0m[[0mdebug[0m] [0mGetting compiler-interface from component compiler for Scala 2.10.1[0m
 [0m[[0mdebug[0m] [0mGetting compiler-interface from component compiler for Scala 2.10.1[0m
-[0m[[0mdebug[0m] [0mRunning cached compiler 9baad77, interfacing (CompilerInterface) with Scala compiler version 2.10.1[0m
+[0m[[0mdebug[0m] [0mRunning cached compiler 37c21afe, interfacing (CompilerInterface) with Scala compiler version 2.10.1[0m
 [0m[[0mdebug[0m] [0mCalling Scala compiler with arguments  (CompilerInterface):[0m
 [0m[[0mdebug[0m] [0m	-bootclasspath[0m
 [0m[[0mdebug[0m] [0m	/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/resources.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/rt.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/sunrsasign.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/jsse.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/jce.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/charsets.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/rhino.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/jfr.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/classes:/home/priyanshu/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.10.1.jar[0m
 [0m[[0mdebug[0m] [0m	-classpath[0m
 [0m[[0mdebug[0m] [0m	/home/priyanshu/Scala_Workspace/Chord/Chord/target/scala-2.10/classes:/home/priyanshu/.ivy2/cache/com.typesafe.akka/akka-actor_2.10/bundles/akka-actor_2.10-2.1.1.jar:/home/priyanshu/.ivy2/cache/com.typesafe/config/bundles/config-1.0.0.jar:/home/priyanshu/.ivy2/cache/com.typesafe.akka/akka-remote_2.10/bundles/akka-remote_2.10-2.1.1.jar:/home/priyanshu/.ivy2/cache/io.netty/netty/bundles/netty-3.5.8.Final.jar:/home/priyanshu/.ivy2/cache/com.google.protobuf/protobuf-java/jars/protobuf-java-2.4.1.jar:/home/priyanshu/.ivy2/cache/org.uncommons.maths/uncommons-maths/jars/uncommons-maths-1.2.2a.jar[0m
-[0m[[0mdebug[0m] [0mScala compilation took 14.728965704 s[0m
+[0m[[0mdebug[0m] [0mScala compilation took 21.961731566 s[0m
 [0m[[0mdebug[0m] [0mInvalidating /home/priyanshu/Scala_Workspace/Chord/Chord/src/main/scala/project3.scala...[0m
 [0m[[0mdebug[0m] [0mInvalidating (transitively) by inheritance from /home/priyanshu/Scala_Workspace/Chord/Chord/src/main/scala/project3.scala...[0m
 [0m[[0mdebug[0m] [0mInitial set of included nodes: Set(/home/priyanshu/Scala_Workspace/Chord/Chord/src/main/scala/project3.scala)[0m
 [0m[[0mdebug[0m] [0mInvalidated by transitive inheritance dependency: Set(/home/priyanshu/Scala_Workspace/Chord/Chord/src/main/scala/project3.scala)[0m
 [0m[[0mdebug[0m] [0mThe /home/priyanshu/Scala_Workspace/Chord/Chord/src/main/scala/project3.scala source file has the following regular definitions changed:[0m
-[0m[[0mdebug[0m] [0m	nodeIDList, notify, closest_preceding_successor, FingerTable, chekfingertable, wait, copy$default$2, $asInstanceOf, nodeIdList, productArity, equals, nodetobefound, Firstjoin, successor, asInstanceOf, asknode, synchronized, nodeid, $isInstanceOf, nodeLocated, fingertable, canEqual, productPrefix, notifyAll, isInstanceOf, <init>, ==, clone, locateNode, copy, toString, Join, node, !=, getClass, copy$default$1, nodeID, refnode, ne, eq, productIterator, predecessor, ##, finalize, productElement, hashCode.[0m
+[0m[[0mdebug[0m] [0m	getStart, getInterval, <init>.[0m
 [0m[[0mdebug[0m] [0mAll member reference dependencies will be considered within this context.[0m
 [0m[[0mdebug[0m] [0mNew invalidations:[0m
 [0m[[0mdebug[0m] [0m	Set()[0m
