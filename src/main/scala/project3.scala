@@ -96,12 +96,14 @@ class Interval(includeStart:Boolean,start:BigInt,end:BigInt, includeEnd:Boolean)
 }
 
 class FingerProp(start: BigInt, interval: Interval,end : BigInt, var node:ActorRef, var nodeid: BigInt){
-
+ // private  count = 0
+  
   def setNode(updatednode:ActorRef) ={
-     this.node=updatednode
+     this.node = updatednode
+     println("nodeid "+nodeid+" start "+start+" end "+end+" updatednode "+updatednode)
   }
   def setNodeID(updatednodeid:BigInt) ={
-     this.nodeid=updatednodeid
+     this.nodeid = updatednodeid
   }
   def getNode(): ActorRef = {
     return this.node
@@ -124,8 +126,8 @@ class FingerProp(start: BigInt, interval: Interval,end : BigInt, var node:ActorR
 
 class Peer(nodeId:BigInt)extends Actor{
      var fingerTable = new Array[FingerProp](14) //2 ^ m  m =7
-     var Successor:ActorRef = null
-     var Predecessor:ActorRef = null
+     var Successor:ActorRef = self
+     var Predecessor:ActorRef = self
      var refnode : ActorRef=null
      var nodeID : BigInt = 0
      var m_maxnodes : BigInt = Global.m_maxnodes
@@ -141,13 +143,17 @@ class Peer(nodeId:BigInt)extends Actor{
       case Firstjoin(nodeid : BigInt) =>{
           println("First Node Joined \n")
           this.nodeID = nodeid
+         // println("First node"+nodeid)
           initializeFingerTable(nodeID)
+          Successor = self
+          Predecessor =self
           sender ! joined()
         }
       case Join(asknode:ActorRef,nodeid : BigInt) =>{
         this.nodeID = nodeId
         this.refnode = asknode
         initializeFingerTable(nodeID)
+       // println("asknode "+asknode)
         asknode!locateNode(self,nodeid)
       
         update_self()
@@ -169,6 +175,7 @@ class Peer(nodeId:BigInt)extends Actor{
       case nodeLocated(predecessor:ActorRef,successor:ActorRef)=>{
           this.Predecessor=predecessor
           this.Successor=successor
+          //println(" nodeLocated Predecessor "+this.Predecessor+" Successor "+this.Successor+" self "+self)
           predecessor!set_Successor(self)//Add by myself
           successor!set_Predecessor(self)
         }
@@ -176,6 +183,7 @@ class Peer(nodeId:BigInt)extends Actor{
       case set_Successor (succ:ActorRef)=>
           Successor = succ
       case set_Predecessor (pred:ActorRef)=>
+       //   println("set_Predecessor"+pred)
           Predecessor = pred
 
       case Find_FingerEntry(node:ActorRef,i:Int,start:BigInt)=>{
@@ -215,7 +223,7 @@ class Peer(nodeId:BigInt)extends Actor{
 
      def update_self():Unit={
           fingerTable(0).setNode(Successor)
-       for(i<-0 until Global.max_len-1){
+       for(i<-0 until Global.max_len-2){
           val interval=new Interval(true,nodeID,fingerTable(i).getNodeID(),true)
           if(interval.isValid(fingerTable(i+1).getStart())) {
             fingerTable(i+1).setNode(fingerTable(i).getNode())
@@ -226,6 +234,7 @@ class Peer(nodeId:BigInt)extends Actor{
         }
       }
      def stablize():Unit={
+        //println(Predecessor)
         Predecessor ! FingerUpdate(self, nodeID)
      }
     def closest_preceding_successor(currnodeID:BigInt,nodeidtobefound:BigInt) : ActorRef = {  
@@ -235,8 +244,8 @@ class Peer(nodeId:BigInt)extends Actor{
             return fingerTable(i).getNode();
           }
       }
-      //return self;  Disagree
-       return fingerTable(m-1).node;// To be checked after confirmiing bhaviour of Interval
+      return self;  
+       //return fingerTable(m-1).node;// To be checked after confirmiing bhaviour of Interval
     }
     def initializeFingerTable(nodeID : BigInt) = { // Updating Interval Left
         for(i <-0 until Global.max_len-1) { // Some implementation say it should be m but I disagree
@@ -278,7 +287,8 @@ class Peer(nodeId:BigInt)extends Actor{
              nodeset += consistenthash(Random.nextInt(2000000))
              //println(nodeset.size)
            }
-          for( i<-0 to numofnodes-1){            
+          for( i<-0 to numofnodes-1){  
+             Thread.sleep(1000)          
              try { 
                    // nodeid = consistenthash(Random.nextInt(2000000))
                     nodeID = nodeset.toVector(i)
