@@ -1,13 +1,14 @@
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.actor.{Actor, ActorRef, ActorSystem, Props, PoisonPill}
+import scala.collection.immutable.{TreeMap, List}
+//import ExecutionContext.Implicits.global
 import java.security.MessageDigest
 import scala.util.Random
-import akka.actor.PoisonPill
 import scala.collection.mutable.HashMap
-import scala.collection.mutable.HashMap
-import scala.collection.immutable.TreeMap
-import scala.collection.immutable.List
+//import scala.collection.immutable.TreeMap
+//import scala.collection.immutable.List
 import akka.util.Timeout
 import java.math.BigInteger
+
 case class set_Successor(succ: ActorRef)
 case class set_Predecessor(pred:ActorRef)
 case class fetch(succ:ActorRef , pred:ActorRef , curr :ActorRef)
@@ -129,6 +130,12 @@ class Peer(nodeId:BigInt)extends Actor{
      var nodeID : BigInt = 0
      var m_maxnodes : BigInt = Global.m_maxnodes
      var m : Int = Global.max_len
+     def getnodeid(node:ActorRef):BigInt={
+          val pattern = "([0-9]+)".r
+          val pattern(num) = node.path.name
+          println(num.toInt)
+          return num.toInt
+     }
 
      def receive = {
       case Firstjoin(nodeid : BigInt) =>{
@@ -259,27 +266,44 @@ class Peer(nodeId:BigInt)extends Actor{
     var sortedNodeList = List.empty[String]
     var totalHopCount = 0.0f
     var aggregate = 0.0f
-    var averageHopCount = 0.0f
-    var refnode : ActorRef = null;
+    var averageHopCount = 0.0f 
+    var retrycount:Int = 0   
+    var refnode : ActorRef = null
     def receive = {
       case "createNetwork"=>{
           println("Network create initiating \n")
-          for( i<-1 to numofnodes){
-            nodeID = consistenthash(i)                   
-             node = system.actorOf(Props(new Peer(nodeID)))
-            //Global.nodemap.put(nodeid,node)
-            if(i>0)
+          var nodeset = scala.collection.mutable.Set[BigInt]()
+          while(nodeset.size != numofnodes)
+          {
+             nodeset += consistenthash(Random.nextInt(2000000))
+             //println(nodeset.size)
+           }
+          for( i<-0 to numofnodes-1){            
+             try { 
+                   // nodeid = consistenthash(Random.nextInt(2000000))
+                    nodeID = nodeset.toVector(i)
+                    node = (system.actorOf(Props(new Peer(nodeID)),name = getmyname(nodeID))) 
+                                 // ...
+              } catch {
+                case e: Exception => {
+                  if(retrycount < 10){
+                    println("Actor name clash tring max try again")
+                  nodeID = consistenthash(Random.nextInt(2000000))
+                    node = (system.actorOf(Props(new Peer(nodeID)),name = getmyname(nodeID))) 
+                    retrycount = retrycount +1
+                  }
+              }                   
+             }
+            Global.nodemap.put(nodeID,node)
+           // println(" i"+i)
 
-            //println("\n i"+i)
-
-            if(i == 1)
+            if(i == 0)
             {
                refnode = node;
                node ! Firstjoin(nodeID)
             }
             else
                node ! Join(refnode,nodeID)  
-               //i = i+1 
                } 
              }
       case joined() => {
@@ -295,28 +319,28 @@ class Peer(nodeId:BigInt)extends Actor{
       }
       case _ => 
     }
-   def consistenthash(index:Int): Int={
+   def consistenthash(index:Int): BigInt={
     var index1:String = index.toString
     var sha:String = ""
     sha = MessageDigest.getInstance("SHA-1").digest(index1.getBytes("UTF-8")).map("%02x".format(_)).mkString
 
-    val res:Int = Parsefirstmbits(sha)
-    return res
+   val res:BigInt = Parsefirstmbits(sha)
+   return res
+ }
+   def getmyname (nodeId: BigInt):String ={
+    return nodeId.toString
    }
-   def Parsefirstmbits(sha:String):Int={
-   // val minbits =  //math.floor(Global.m_maxnodes/16)
-    val loop:Int = 4 //(minbits/4).toInt
-   // var mask = Global.m_maxnodes & (Global.m_maxnodes -1)
-  //  println(loop)
-   // mask = generatemask(numofnodes)
-    var res: Int = 0
+   def Parsefirstmbits(sha:String):BigInt={
+    val loop:Int = 4 
+    //println(loop)
+    var res: BigInt = 0
     for(i<-0 to loop-1)
        res = (res << 4 ) | Character.digit(sha.charAt(i), 16);
     res = res >> 2
     res = res & 0xFFFC /*Fetching first 14 bits in resultant string*/
-    println(res)
+    //println(res)
     return res
    }
- }
 
+ }
 
