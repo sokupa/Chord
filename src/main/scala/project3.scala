@@ -19,6 +19,7 @@ case class nodeLocated(predecessor:ActorRef,successor:ActorRef)
 case class Find_Finger(node:ActorRef,i:Int,start:BigInt)
 case class FingerEntry_Found(i:Int,successor:ActorRef)
 case class Find_FingerEntry(node:ActorRef,i:Int,start:BigInt)
+case class FingerUpdate(newnode: ActorRef, newnodeID : BigInt)
 //case class FingerEntry_Found(i:Int,successor:ActorRef)
 
   object Global {
@@ -93,7 +94,7 @@ class Interval(includeStart:Boolean,start:BigInt,end:BigInt, includeEnd:Boolean)
   } 
 }
 
-class FingerProp(start: BigInt, interval: Interval, var node:ActorRef, var nodeid: BigInt){
+class FingerProp(start: BigInt, interval: Interval,end : BigInt, var node:ActorRef, var nodeid: BigInt){
 
   def setNode(updatednode:ActorRef) ={
      this.node=updatednode
@@ -109,6 +110,9 @@ class FingerProp(start: BigInt, interval: Interval, var node:ActorRef, var nodei
   }
   def getStart(): BigInt = {
     return this.start
+  }
+   def getEnd(): BigInt = {
+    return this.end
   }
   def getInterval(): Interval = {
     return this.interval
@@ -169,7 +173,7 @@ class Peer(nodeId:BigInt)extends Actor{
 
       case Find_FingerEntry(node:ActorRef,i:Int,start:BigInt)=>{
         val interval = new Interval(false, nodeID, fingerTable(0).getNodeID, true)
-        if(interval.isValid(fingerTable(i+1).getStart)){
+        if(interval.isValid(start)){
           node!FingerEntry_Found(i,Successor)
          }else{
           var nextnode : ActorRef=closest_preceding_successor(nodeID,start)
@@ -179,31 +183,43 @@ class Peer(nodeId:BigInt)extends Actor{
       case FingerEntry_Found(i:Int,successor:ActorRef)=>{
         this.fingerTable(i).setNode(successor)
       }
+      case FingerUpdate(newnode: ActorRef, newnodeID : BigInt)=>{
+        var updatepred : Int = 0 
+        if(newnode != self)
+        {
+          for(i<- 0 until Global.max_len-1)
+          {
+              val interval = new Interval(true,fingerTable(i).getStart,fingerTable(i).getEnd,true)
+
+              if(interval.isValid(newnodeID))
+              {
+                updatepred = 1
+                fingerTable(i).setNode(newnode) // Set Node ID is left to Actor Selection. To be done after merging th changes.
+              }
+          }
+          if(updatepred == 1)
+            Predecessor ! FingerUpdate(newnode,newnodeID)
+        }
+      
+      }
+
       case _=>
       }
 
      def update_self():Unit={
           fingerTable(0).setNode(Successor)
-         // fingerTable(0).setNodeID(successor's node id)   
        for(i<-0 until Global.max_len-1){
-        /*
           val interval=new Interval(true,nodeID,fingerTable(i).getNodeID(),true)
           if(interval.isValid(fingerTable(i+1).getStart())) {
             fingerTable(i+1).setNode(fingerTable(i).getNode())
           }
-
           else{
-          */
               refnode!Find_FingerEntry(self,i+1,fingerTable(i+1).getStart())
-           // }
           }
         }
-
+      }
      def stablize():Unit={
-        for(i <- 0 to m-1) {
-         // val position=(getHash()-BigInt(2).pow(i)+BigInt(2).pow(m)+1)%BigInt(2).pow(m)
-         // successor!Update_Finger_Entries(position,i,self,getHash())
-        }
+        Predecessor ! FingerUpdate(self, nodeID)
      }
     def closest_preceding_successor(currnodeID:BigInt,nodeidtobefound:BigInt) : ActorRef = {  
         val interval=new Interval(false,currnodeID,nodeidtobefound,false)
@@ -220,7 +236,7 @@ class Peer(nodeId:BigInt)extends Actor{
           val start = nodeID + BigInt(2).pow(i)%(m_maxnodes)
           val end = nodeID + BigInt(2).pow(i+1)%(m_maxnodes)
           val interval= new Interval(true, start ,end, false)
-          fingerTable(i)= new FingerProp(start,interval,self,nodeID)
+          fingerTable(i)= new FingerProp(start,interval,end,self,nodeID)
         }
 
     }
@@ -258,7 +274,7 @@ class Peer(nodeId:BigInt)extends Actor{
 
             if(i == 1)
             {
-               val refnode:ActorRef = node;
+               refnode = node;
                node ! Firstjoin(nodeID)
             }
             else
