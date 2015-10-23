@@ -16,6 +16,16 @@ case class Join(asknode:ActorRef,nodeid : BigInt)
 case class Firstjoin(nodeid : BigInt)
 case class locateNode(nodetobefound:ActorRef,nodeid:BigInt)
 case class nodeLocated(predecessor:ActorRef,successor:ActorRef)
+case class Find_Finger(node:ActorRef,i:Int,start:BigInt)
+case class FingerEntry_Found(i:Int,successor:ActorRef)
+case class Find_FingerEntry(node:ActorRef,i:Int,start:BigInt)
+//case class FingerEntry_Found(i:Int,successor:ActorRef)
+
+  object Global {
+     var nodemap = new HashMap[BigInt, ActorRef]
+     val max_len =14
+     val m_maxnodes:BigInt = BigInt(2).pow(max_len)
+     }
 
 object start extends App{
 
@@ -31,11 +41,7 @@ object start extends App{
      else
        println("Input in format <numofnodes> < numRequest>")
   }
-  object Global {
-     var nodemap = new HashMap[BigInt, ActorRef]
-     val max_len =14
-     val m_maxnodes:BigInt = BigInt(2).pow(max_len)
-     }
+
 
 /********************************************************************************************************************************************
 ***********************************************Class Peer**********************************************************************************
@@ -48,13 +54,43 @@ object start extends App{
  *********************************************************************************************************************************************
 *********************************************************************************************************************************************/
 
-class Interval(leftInclude:Boolean,start:BigInt,end:BigInt, rightInclude:Boolean){
-  def isValid(validity:BigInt): Boolean = { 
-
-
-
-  return true
-  } //TO DO
+class Interval(includeStart:Boolean,start:BigInt,end:BigInt, includeEnd:Boolean){
+  def isValid(nodetobefound:BigInt): Boolean = { 
+    if(start.equals(end))
+    {
+      if(includeStart.equals(false) && includeEnd.equals(false) && end.equals(nodetobefound))
+      {
+        return false
+      }
+      else
+      {
+        return true
+      }
+    }
+    else if(end > start)
+    {
+       if(((start < nodetobefound) && (end > nodetobefound)) 
+           || (end.equals(nodetobefound)&&includeEnd.equals(true)) 
+           || (start.equals(nodetobefound) && includeStart.equals(true)))
+       {
+          return true
+       }
+       else
+          return false
+    }
+    else if(end < start)
+    {
+      if(((start < nodetobefound && nodetobefound < Global.m_maxnodes) || (0 <= nodetobefound  && nodetobefound <= end)) 
+          || (start.equals(nodetobefound) && includeStart.equals(true)) 
+          || (end.equals(nodetobefound) && includeEnd.equals(true)))
+       {
+          return true
+       }
+       else
+          return false
+    }
+    else return false
+  } 
 }
 
 class FingerProp(start: BigInt, interval: Interval, var node:ActorRef, var nodeid: BigInt){
@@ -74,22 +110,18 @@ class FingerProp(start: BigInt, interval: Interval, var node:ActorRef, var nodei
   def getStart(): BigInt = {
     return this.start
   }
-  /*
-  def setStart(updatedstart:BigIn): BigInt = {
-     this.start=updatedstart
-  }
-  */
   def getInterval(): Interval = {
     return this.interval
   } 
  
-};
+}
  
 
 class Peer(nodeId:BigInt)extends Actor{
      var fingerTable = new Array[FingerProp](14) //2 ^ m  m =7
      var Successor:ActorRef = null
      var Predecessor:ActorRef = null
+     var refnode : ActorRef=null
      var nodeID : BigInt = 0
      var m_maxnodes : BigInt = Global.m_maxnodes
      var m : Int = Global.max_len
@@ -103,11 +135,12 @@ class Peer(nodeId:BigInt)extends Actor{
         }
       case Join(asknode:ActorRef,nodeid : BigInt) =>{
         this.nodeID = nodeId
+        this.refnode = asknode
         initializeFingerTable(nodeID)
         asknode!locateNode(self,nodeid)
-        
+      
         update_self()
-        update_others()
+        stablize()
         sender ! joined()
       }
 
@@ -134,29 +167,43 @@ class Peer(nodeId:BigInt)extends Actor{
       case set_Predecessor (pred:ActorRef)=>
           Predecessor = pred
 
+      case Find_FingerEntry(node:ActorRef,i:Int,start:BigInt)=>{
+        val interval = new Interval(false, nodeID, fingerTable(0).getNodeID, true)
+        if(interval.isValid(fingerTable(i+1).getStart)){
+          node!FingerEntry_Found(i,Successor)
+         }else{
+          var nextnode : ActorRef=closest_preceding_successor(nodeID,start)
+          nextnode!Find_FingerEntry(node,i,start)
+        }
+      }
+      case FingerEntry_Found(i:Int,successor:ActorRef)=>{
+        this.fingerTable(i).setNode(successor)
+      }
       case _=>
-     }
-     def initialize()={
-      for(i<-0 to 7)
-      {
-      // fingertable(i) = null 
-      }      
-     }
-     def update_self():Unit={
-          println (self)
-          sender ! fetch(Successor,Predecessor,self)
-         for(i<-1 to Global.max_len){
-          
-         }
-         
-        // Predecessor ! set_Successor(self)
-        // Successor ! set_Predecessor (self)
-     }
-     def update_others():Unit={
+      }
 
-     }
-     def chekfingerTable(nodeID: BigInt):Boolean={
-        return true//To DO
+     def update_self():Unit={
+          fingerTable(0).setNode(Successor)
+         // fingerTable(0).setNodeID(successor's node id)   
+       for(i<-0 until Global.max_len-1){
+        /*
+          val interval=new Interval(true,nodeID,fingerTable(i).getNodeID(),true)
+          if(interval.isValid(fingerTable(i+1).getStart())) {
+            fingerTable(i+1).setNode(fingerTable(i).getNode())
+          }
+
+          else{
+          */
+              refnode!Find_FingerEntry(self,i+1,fingerTable(i+1).getStart())
+           // }
+          }
+        }
+
+     def stablize():Unit={
+        for(i <- 0 to m-1) {
+         // val position=(getHash()-BigInt(2).pow(i)+BigInt(2).pow(m)+1)%BigInt(2).pow(m)
+         // successor!Update_Finger_Entries(position,i,self,getHash())
+        }
      }
     def closest_preceding_successor(currnodeID:BigInt,nodeidtobefound:BigInt) : ActorRef = {  
         val interval=new Interval(false,currnodeID,nodeidtobefound,false)
@@ -169,7 +216,7 @@ class Peer(nodeId:BigInt)extends Actor{
        return fingerTable(m-1).node;// To be checked after confirmiing bhaviour of Interval
     }
     def initializeFingerTable(nodeID : BigInt) = { // Updating Interval Left
-        for(i <-0 until m-1) { // Some implementation say it should be m but I disagree
+        for(i <-0 until Global.max_len-1) { // Some implementation say it should be m but I disagree
           val start = nodeID + BigInt(2).pow(i)%(m_maxnodes)
           val end = nodeID + BigInt(2).pow(i+1)%(m_maxnodes)
           val interval= new Interval(true, start ,end, false)
@@ -230,12 +277,6 @@ class Peer(nodeId:BigInt)extends Actor{
        // }
         }
       }
-
-     case fetch(successor :ActorRef , predecessor :ActorRef, from :ActorRef)=>{
-      println("Inside fetch")
-
-     }
- 
       case _ => 
     }
    def consistenthash(index:Int): Int={
@@ -250,7 +291,7 @@ class Peer(nodeId:BigInt)extends Actor{
    // val minbits =  //math.floor(Global.m_maxnodes/16)
     val loop:Int = 4 //(minbits/4).toInt
    // var mask = Global.m_maxnodes & (Global.m_maxnodes -1)
-    println(loop)
+  //  println(loop)
    // mask = generatemask(numofnodes)
     var res: Int = 0
     for(i<-0 to loop-1)
@@ -259,9 +300,7 @@ class Peer(nodeId:BigInt)extends Actor{
     res = res & 0xFFFC /*Fetching first 14 bits in resultant string*/
     println(res)
     return res
-
    }
-
  }
 
 
