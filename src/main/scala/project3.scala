@@ -26,7 +26,7 @@ case object Print
 
 object Global {
     var nodemap = new HashMap[Long, ActorRef]
-     val max_len =8
+     val max_len =12
      val m_maxnodes:Long = math.pow(2,max_len).toLong
      }
 
@@ -163,7 +163,7 @@ object Main extends App{
     return res
     */
     
-    val loop:Int = 2 
+    val loop:Int = 3 
     //println(loop)
     var res: Long = 0
     for(i<-0 to loop-1)
@@ -334,20 +334,21 @@ class Peer(nodeID : Long) extends Actor{
 
       if(interval.inValid(key))
       {
-        println("msgcount ----- Ended" + msgcount + "Message Send to"+self)
+        println("Msgcount "+ msgcount +" Ended Message Send to "+My_NodeID())
 
         sender!Found(key,Predecessor,self,hop,msgcount)
       }
       else if(interval2.inValid(key))
       {
-        println("msgcount "+msgcount+"Message Send to "+Successor)
+        println("Msgcount "+ msgcount +" Ended Message Send to "+My_NodeID(Successor))
+
 
         sender!Found(key,self,Successor,hop + 1,msgcount)
       }
      else
       {
-         println("msgcount Still Routing" + msgcount + "Message Send to"+self)
         val target=closest_preceding_finger(key)
+        println("------Msgcount " + msgcount+" Still Routing. Sent to "+My_NodeID(target))
         target!Find(node,key,hop + 1,msgcount)
       }
       
