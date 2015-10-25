@@ -11,6 +11,4 @@
 [0m[[0mdebug[0m] [0m	/home/sokupa/.ivy2/cache/org.uncommons.maths/uncommons-maths/jars/uncommons-maths-1.2.2a.jar[0m
 [0m[[0mdebug[0m] [0mWaiting for thread run-main-0 to terminate.[0m
 [0m[[0mdebug[0m] [0m	Thread run-main-0 exited.[0m
-[0m[[0mdebug[0m] [0mWaiting for thread Chordsimulator-akka.actor.default-dispatcher-3 to terminate.[0m
-[0m[[0mdebug[0m] [0m	Thread Chordsimulator-akka.actor.default-dispatcher-3 exited.[0m
-[0m[[0mdebug[0m] [0mWaiting for thread Chordsimulator-akka.actor.default-dispatcher-5 to terminate.[0m
+[0m[[0mdebug[0m] [0mWaiting for thread Chordsimulator-akka.actor.default-dispatcher-4 to terminate.[0m
