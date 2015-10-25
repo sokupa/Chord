@@ -1,11 +1,9 @@
 import akka.actor.{Actor, ActorRef, ActorSystem, Props, PoisonPill}
-import scala.collection.immutable.{TreeMap, List}
 import java.security.MessageDigest
 import scala.util.Random
 import scala.collection.mutable.HashMap
 import akka.util.Timeout
 import scala.collection.immutable.{TreeMap, List}
-
 
 case class m_FirstJoin(numrequest : Int,numnodes : Int)
 case class m_Join(asknode:ActorRef)
@@ -20,55 +18,42 @@ case class m_setPredecessor(node:ActorRef)
 case class m_setSuccessor(node:ActorRef)
 case class Find(node:ActorRef,key:Long, hop:Int, msgcount:Int)
 case class Found(key:Long,predecessor:ActorRef,successor:ActorRef,hop:Int,msgnumber:Long)
-case object Print
-
-      
-
 
 object Global {
     var nodemap = new HashMap[Long, ActorRef]
-     val max_len =12
+     val max_len =24
      val m_maxnodes:Long = math.pow(2,max_len).toLong
      }
 
 object Main extends App{
-
      if(args.length == 2) {
        var m_numofnodes = args(0).toInt
        var m_numRequest = args(1).toInt
-       
        val system = ActorSystem("Chordsimulator")
-
        var begin = system.actorOf(Props(new ChordNetwork(m_numofnodes, m_numRequest)),"ChordNetwork")
        begin ! "createNetwork"
      }
      else
-       println("Input in format <numofnodes> < numRequest>")
+       println("Input in format should be : <numofnodes> <numRequest>")
   }
 
   class ChordNetwork(numofnodes:Int , numRequest: Int ) extends Actor {
     var numm_Joined:Int = 0
     var nodeID : Long = 0
     var node:ActorRef = null
-    var totalHopCount = 0.0f
-    var aggregate = 0.0f
-    var averageHopCount = 0.0f 
     var retrycount:Int = 0   
     var refNode : ActorRef = null
-    var hopcount : Int =0
     var nodeset = scala.collection.mutable.Set[Long]()
-
     def receive = {
       case "createNetwork"=>{
-          println("Network create initiating \n") 
+        println("Network create initiating \n") 
 
-       val system1 = ActorSystem("Worker")
+        val system1 = ActorSystem("Worker")
                   while(nodeset.size != numofnodes)
                   {
                      nodeset += consistenthash(Random.nextInt(2000000))
-                   }
+                  }
                   for( i<-0 until numofnodes){  
-                   //  Thread.sleep(10)          
                      try { 
                             nodeID = nodeset.toVector(i)
                             node = (system1.actorOf(Props(new Peer(nodeID)),name = getmyname(nodeID))) 
@@ -76,53 +61,36 @@ object Main extends App{
                       } catch {
                         case e: Exception => {
                           if(retrycount < 10){
-                            println("Actor name clash trying max try again")
+                            println("Actor name clash trying again")
                             nodeID = consistenthash(Random.nextInt(2000000))
                             node = (system1.actorOf(Props(new Peer(nodeID)),name = getmyname(nodeID))) 
                             retrycount = retrycount +1
                           }
                       }                   
                      }
-                     if(i==0)
+                     if(i==0)//First Node added to network. This node will act as the bootstrap node.
                         {
                           refNode = node
                           refNode ! m_FirstJoin(numRequest,numofnodes)
                         }
-                        else
+                      else
                         {    
                          node ! m_Join(refNode)  
                             Thread.sleep(100) 
                          } 
                     Global.nodemap.put(nodeID,node)
                   }
-           }
+      }
       
       case "m_Joined" => {
-
            numm_Joined = numm_Joined + 1
             if(numm_Joined == numofnodes - 1){
               println("m_Joined " + numm_Joined)
-                  // refNode ! Print
-                  Send_Messages()
+                  Send_Messages()// All nodes have been added to the network. Initiate message passing.
 
         }
       }
-       }     
-
-/*
-      case Found(key:Long,predecessor:ActorRef,successor:ActorRef,hop:Int,msgnumber:Long)=>{
-          println("Found  "+key+" at "+successor)
-          hopcount = hopcount + hop
-          if(msgnumber == numRequest*numofnodes)
-          {
-            println("All the messages sucessfully routed to their destination.")
-            println("Average Hop Count for a Network of Size"+Global.m_maxnodes+ "is -->"+hopcount/numRequest)
-
-          }
-    }
-  */
-
-    
+    }         
   def Send_Messages() ={
             var msgsent:Int =0
             for( i<-0 until numRequest)
@@ -133,7 +101,7 @@ object Main extends App{
                  node = Global.nodemap(nodeID)
                  val msg:Long = consistenthash(Random.nextInt(1000000))
                 //  println("Send_Messages to"+node)
-                  Thread.sleep(1000)
+                  Thread.sleep(30)
                  node ! Find(node,msg,0,msgsent)
               }
                  
@@ -141,41 +109,23 @@ object Main extends App{
         }
 
    def consistenthash(index:Int): Long={
-    var index1:String = index.toString
-    var sha:String = ""
-    sha = MessageDigest.getInstance("SHA-1").digest(index1.getBytes("UTF-8")).map("%02x".format(_)).mkString
+      var index1:String = index.toString
+      var sha:String = ""
+      sha = MessageDigest.getInstance("SHA-1").digest(index1.getBytes("UTF-8")).map("%02x".format(_)).mkString
 
-   val res:Long = Parsefirstmbits(sha)
-   return res
+     val res:Long = Parsefirstmbits(sha)
+     return res
  }
    def getmyname (nodeId: Long):String ={
     return nodeId.toString
    }
    def Parsefirstmbits(sha:String):Long={
-    /*
-    val loop:Int = 4 
-    //println(loop)
+    val loop:Int = 6 
     var res: Long = 0
     for(i<-0 to loop-1)
        res = (res << 4 ) | Character.digit(sha.charAt(i), 16);
-    res = res >> 2
-    res = res & 0xFFFC /*Fetching first 14 bits in resultant string*/
-    //println(res)
+    res = res & 0xFFFFFFFF 
     return res
-    */
-    
-    val loop:Int = 3 
-    //println(loop)
-    var res: Long = 0
-    for(i<-0 to loop-1)
-       res = (res << 4 ) | Character.digit(sha.charAt(i), 16);
-    
-    res = res & 0xFFF /*Fetching first 14 bits in resultant string*/
-  //  res = res >> 1
-    //println(res)
-    return res
-    
-
    }
 
  }
@@ -205,7 +155,6 @@ class Peer(nodeID : Long) extends Actor{
           return num.toInt
   }
 
-
   def closest_preceding_finger(id:Long): ActorRef = {
     val interval=new Interval(false,My_NodeID(),id,false)
     for(i <- m-1 to 0 by -1){
@@ -215,7 +164,6 @@ class Peer(nodeID : Long) extends Actor{
     }
     return self;
   }
-
 
   def init_finger_table():Unit = {
     fingerTable(0).setNode(Successor)
@@ -312,10 +260,9 @@ class Peer(nodeID : Long) extends Actor{
     case Update_Finger_Entry(before:Long,i:Int,node:ActorRef,nodeHash:Long)=>{
       if(node!=self) {
         val interval1 = new Interval(false, My_NodeID(), fingerTable(0).get_NodeID(), true)
+        val interval2=new Interval(false, My_NodeID(), fingerTable(i).get_NodeID(), false)
         if (interval1.inValid(before)) {
-            val interval2=new Interval(false, My_NodeID(), fingerTable(i).get_NodeID(), false)
             if(interval2.inValid(nodeHash)){
-           // println("Node    " +My_NodeID(self) +"Update_Finger_Entry Entry at "+i+ " is "+My_NodeID(node))
               fingerTable(i).setNode(node)
               fingerTable(i).Set_NodeID(My_NodeID(node))
               Predecessor!Update_Finger_Entry(My_NodeID(),i,node,nodeHash)
@@ -341,21 +288,18 @@ class Peer(nodeID : Long) extends Actor{
 
       if(interval.inValid(key))
       {
-        println("Msgcount "+ msgcount +" Ended Message Send to "+My_NodeID())
-
+        println("Msg "+ msgcount +" Routed. Key found at "+My_NodeID())
         refNode!Found(key,Predecessor,self,hop,msgcount)
       }
       else if(interval2.inValid(key))
       {
-        println("Msgcount "+ msgcount +" Ended Message Send to "+My_NodeID(Successor))
-
-
+        println("Msg "+ msgcount +" Routed. Key found at "+My_NodeID(Successor))
         refNode!Found(key,self,Successor,hop + 1,msgcount)
       }
      else
       {
         val target=closest_preceding_finger(key)
-        println("------Msgcount " + msgcount+" Still Routing. Sent to "+My_NodeID(target))
+        println("------Msg " + msgcount+" Still Routing. Sent to "+My_NodeID(target))
         target!Find(node,key,hop + 1,msgcount)
       }
       
@@ -366,35 +310,17 @@ class Peer(nodeID : Long) extends Actor{
           hopcount = hopcount + hop
           if(msgnumber == numRequest*numofnodes)
           {
+           var finalaverage :Double = hopcount.toDouble/msgnumber.toDouble
+            println("**********************************************************")
             println("**********************************************************")
             println("All the messages sucessfully routed to their destination.")
-            println("Average Hop Count for a Network of Size "+Global.m_maxnodes+ "is -->**** "+hopcount/msgnumber+" ****")
+            println("Average Hop Count is -->**** "+finalaverage+" ************")
             println("**********************************************************")
-
+            println("**********************************************************")
           }
-      
     }
-
-    case Print =>{
-      println("============================================")
-      println("Node: %s".format(self.toString()))
-      println("Hash: %s".format(My_NodeID()))
-      println("Predecessor: %d".format(My_NodeID(Predecessor)))
-      println("Successor: %d".format(My_NodeID(Successor)))
-      println("Finger Table: ")
-      for(i<- 0 until m) {
-        println("   %d : ".format(i)+fingerTable(i).print)
-      }
-      println("============================================")
-     
-    }
-    Thread.sleep(10)
-    Successor ! Print
   }
-
 }
-
-
 
 class FingerProp(start: Long, interval: Interval, var node:ActorRef,var nodeID:Long){
   def getStart(): Long = {
@@ -414,10 +340,6 @@ class FingerProp(start: Long, interval: Interval, var node:ActorRef,var nodeID:L
   }
   def setNode(newNode:ActorRef):Unit ={
     this.node=newNode
-  }
-
-  def print:String={
-    return ("Start: %s, End: %s, Node: %d".format(start,interval.getEnd,get_NodeID()))
   }
 }
 
@@ -463,4 +385,3 @@ class Interval(includeStart:Boolean,start:Long,end:Long, includeEnd:Boolean){
     return end
   }
 }
-
