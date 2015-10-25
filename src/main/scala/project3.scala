@@ -7,7 +7,7 @@ import akka.util.Timeout
 import scala.collection.immutable.{TreeMap, List}
 
 
-case class m_FirstJoin()
+case class m_FirstJoin(numrequest : Int,numnodes : Int)
 case class m_Join(asknode:ActorRef)
 case class m_locateposition(node:ActorRef,nodeHash:Long)
 case class m_nodePosLocated(predecessor:ActorRef,successor:ActorRef)
@@ -21,6 +21,7 @@ case class m_setSuccessor(node:ActorRef)
 case class Find(node:ActorRef,key:Long, hop:Int, msgcount:Int)
 case class Found(key:Long,predecessor:ActorRef,successor:ActorRef,hop:Int,msgnumber:Long)
 case object Print
+
       
 
 
@@ -85,6 +86,7 @@ object Main extends App{
                      if(i==0)
                         {
                           refNode = node
+                          refNode ! m_FirstJoin(numRequest,numofnodes)
                         }
                         else
                         {    
@@ -93,8 +95,6 @@ object Main extends App{
                          } 
                     Global.nodemap.put(nodeID,node)
                   }
-
-
            }
       
       case "m_Joined" => {
@@ -107,9 +107,9 @@ object Main extends App{
 
         }
       }
-        
+       }     
 
-
+/*
       case Found(key:Long,predecessor:ActorRef,successor:ActorRef,hop:Int,msgnumber:Long)=>{
           println("Found  "+key+" at "+successor)
           hopcount = hopcount + hop
@@ -120,7 +120,8 @@ object Main extends App{
 
           }
     }
-  }  
+  */
+
     
   def Send_Messages() ={
             var msgsent:Int =0
@@ -169,7 +170,7 @@ object Main extends App{
     for(i<-0 to loop-1)
        res = (res << 4 ) | Character.digit(sha.charAt(i), 16);
     
-    res = res & 0xFF /*Fetching first 14 bits in resultant string*/
+    res = res & 0xFFF /*Fetching first 14 bits in resultant string*/
   //  res = res >> 1
     //println(res)
     return res
@@ -186,6 +187,9 @@ class Peer(nodeID : Long) extends Actor{
      var refNode : ActorRef=null
      var m_maxnodes : Long = Global.m_maxnodes
      val m : Int = Global.max_len
+     var hopcount : Int = 0
+     var numRequest: Int = 0
+     var numofnodes : Int = 0
 
   fingertableinit()
   def My_NodeID():Long={
@@ -250,7 +254,10 @@ class Peer(nodeID : Long) extends Actor{
 }
 
   override def receive: Receive ={
-    case m_FirstJoin()=>{
+    case m_FirstJoin(numrequest : Int,numnodes : Int)=>{
+      this.numRequest = numrequest
+      this.numofnodes = numnodes
+      refNode = self
       sender ! "m_Joined"
     }
 
@@ -336,14 +343,14 @@ class Peer(nodeID : Long) extends Actor{
       {
         println("Msgcount "+ msgcount +" Ended Message Send to "+My_NodeID())
 
-        sender!Found(key,Predecessor,self,hop,msgcount)
+        refNode!Found(key,Predecessor,self,hop,msgcount)
       }
       else if(interval2.inValid(key))
       {
         println("Msgcount "+ msgcount +" Ended Message Send to "+My_NodeID(Successor))
 
 
-        sender!Found(key,self,Successor,hop + 1,msgcount)
+        refNode!Found(key,self,Successor,hop + 1,msgcount)
       }
      else
       {
@@ -351,6 +358,20 @@ class Peer(nodeID : Long) extends Actor{
         println("------Msgcount " + msgcount+" Still Routing. Sent to "+My_NodeID(target))
         target!Find(node,key,hop + 1,msgcount)
       }
+      
+    }
+
+    case Found(key:Long,predecessor:ActorRef,successor:ActorRef,hop:Int,msgnumber:Long)=>{
+          println("Destination of Key "+key+" found at \n"+My_NodeID(successor))
+          hopcount = hopcount + hop
+          if(msgnumber == numRequest*numofnodes)
+          {
+            println("**********************************************************")
+            println("All the messages sucessfully routed to their destination.")
+            println("Average Hop Count for a Network of Size "+Global.m_maxnodes+ "is -->**** "+hopcount/msgnumber+" ****")
+            println("**********************************************************")
+
+          }
       
     }
 
