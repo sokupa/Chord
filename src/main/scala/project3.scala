@@ -1,3 +1,12 @@
+/**************************************************************************************************************
+*************************Chord Protocol Implementation*************************************************************
+*Instuctions to Run: 
+*As server: sbt "project project3" "run <num of nodes><num of request>" **** run sbt on server directory
+*As client: sbt "project client" "192.108.0.13" Replace it with source ip **** run sbt on client directory******
+*use application.conf to change server ip or client Ip 
+*Publisher: Souav kumar parmar 
+*       Priyanshu Pandey
+****************************************************************************************************************/
 import akka.actor.{Actor, ActorRef, ActorSystem, Props, PoisonPill}
 import java.security.MessageDigest
 import scala.util.Random
@@ -7,13 +16,11 @@ import scala.collection.immutable.{TreeMap, List}
 
 case class m_FirstJoin(numrequest : Int,numnodes : Int)
 case class m_Join(asknode:ActorRef)
-case class m_locateposition(node:ActorRef,nodeHash:Long)
+case class m_locateposition(node:ActorRef,nodeid:Long)
 case class m_nodePosLocated(predecessor:ActorRef,successor:ActorRef)
 case class Find_Finger_Entry(node:ActorRef,i:Int,start:Long)
 case class Found_Finger_Entry(i:Int,successor:ActorRef)
-case class Update_Finger_Entry(before:Long,i:Int,node:ActorRef,nodeHash:Long)
-case class m_FindMsgTarget(node:ActorRef,code:String, Hop:Int)
-case class m_FoundMsgTarget(code: String,predecessor:ActorRef,successor:ActorRef,Hop:Int)
+case class Update_Finger_Entry(before:Long,i:Int,node:ActorRef,nodeid:Long)
 case class m_setPredecessor(node:ActorRef)
 case class m_setSuccessor(node:ActorRef)
 case class Find(node:ActorRef,key:Long, hop:Int, msgcount:Int)
@@ -158,7 +165,7 @@ class Peer(nodeID : Long) extends Actor{
   def closest_preceding_finger(id:Long): ActorRef = {
     val interval=new Interval(false,My_NodeID(),id,false)
     for(i <- m-1 to 0 by -1){
-      if(interval.inValid(fingerTable(i).get_NodeID())) {
+      if(interval.inValid(fingerTable(i).getNodeID())) {
         return fingerTable(i).node;
       }
     }
@@ -167,15 +174,15 @@ class Peer(nodeID : Long) extends Actor{
 
   def init_finger_table():Unit = {
     fingerTable(0).setNode(Successor)
-    fingerTable(0).Set_NodeID(My_NodeID(Successor))
+    fingerTable(0).setNodeID(My_NodeID(Successor))
       //  println("Node    " +self+"init_finger_table Entry at 0"+Successor)
 
     for(i<-0 until m-1){
-      val interval=new Interval(true,My_NodeID(),fingerTable(i).get_NodeID(),true)
+      val interval=new Interval(true,My_NodeID(),fingerTable(i).getNodeID(),true)
       if(interval.inValid(fingerTable(i+1).getStart())) {
            //println("Node    " +self +"init_finger_table Entry at "+i+"is" +fingerTable(i).getNode())
         fingerTable(i+1).setNode(fingerTable(i).getNode())
-        fingerTable(i+1).Set_NodeID(My_NodeID(fingerTable(i).getNode()))
+        fingerTable(i+1).setNodeID(My_NodeID(fingerTable(i).getNode()))
       }
       else{
         if(refNode!=null){
@@ -210,7 +217,7 @@ class Peer(nodeID : Long) extends Actor{
     }
 
     case m_Join(asknode:ActorRef)=>{
-      println("m_Join")
+    //  println("m_Join")
       this.refNode=asknode
       refNode!m_locateposition(self,My_NodeID)
       sender ! "m_Joined"
@@ -221,8 +228,7 @@ class Peer(nodeID : Long) extends Actor{
       this.Successor=successor
       Predecessor!m_setSuccessor(self)
       Successor!m_setPredecessor(self)
-      println("Located")
-      println(" self "+My_NodeID(self)+" Successor "+My_NodeID(Successor)+ " Predecessor "+ My_NodeID(Predecessor))
+      println(" Position of New Node found -->"+My_NodeID(self)+" Successor is "+My_NodeID(Successor)+ " and  Predecessor is"+ My_NodeID(Predecessor))
       init_finger_table()
       //println("Finger Initiated")
       update_others()
@@ -233,22 +239,22 @@ class Peer(nodeID : Long) extends Actor{
     case Found_Finger_Entry(i:Int,successor:ActorRef)=>{
      // println("Node    " +My_NodeID(self) +"Found_Finger_Entry Entry at "+i+ "is "+My_NodeID(successor))
       this.fingerTable(i).setNode(successor)
-      this.fingerTable(i).Set_NodeID(My_NodeID(successor))
+      this.fingerTable(i).setNodeID(My_NodeID(successor))
     }
 
-    case m_locateposition(node:ActorRef,nodeHash:Long)=>{
-      val interval = new Interval(false, My_NodeID(), fingerTable(0).get_NodeID(), true)
-      if(interval.inValid(nodeHash)){
+    case m_locateposition(node:ActorRef,nodeid:Long)=>{
+      val interval = new Interval(false, My_NodeID(), fingerTable(0).getNodeID(), true)
+      if(interval.inValid(nodeid)){
         node!m_nodePosLocated(self,this.Successor)
       }else{
 
-        val target=closest_preceding_finger(nodeHash)
-        target!m_locateposition(node,nodeHash)
+        val target=closest_preceding_finger(nodeid)
+        target!m_locateposition(node,nodeid)
       }
     }
 
     case Find_Finger_Entry(node:ActorRef,i:Int,start:Long)=>{
-      val interval = new Interval(false, My_NodeID(), fingerTable(0).get_NodeID(), true)
+      val interval = new Interval(false, My_NodeID(), fingerTable(0).getNodeID(), true)
       if(interval.inValid(start)){
         node!Found_Finger_Entry(i,Successor)
       }else{
@@ -257,19 +263,19 @@ class Peer(nodeID : Long) extends Actor{
       }
     }
 
-    case Update_Finger_Entry(before:Long,i:Int,node:ActorRef,nodeHash:Long)=>{
+    case Update_Finger_Entry(before:Long,i:Int,node:ActorRef,nodeid:Long)=>{
       if(node!=self) {
-        val interval1 = new Interval(false, My_NodeID(), fingerTable(0).get_NodeID(), true)
-        val interval2=new Interval(false, My_NodeID(), fingerTable(i).get_NodeID(), false)
+        val interval1 = new Interval(false, My_NodeID(), fingerTable(0).getNodeID(), true)
+        val interval2=new Interval(false, My_NodeID(), fingerTable(i).getNodeID(), false)
         if (interval1.inValid(before)) {
-            if(interval2.inValid(nodeHash)){
+            if(interval2.inValid(nodeid)){
               fingerTable(i).setNode(node)
-              fingerTable(i).Set_NodeID(My_NodeID(node))
-              Predecessor!Update_Finger_Entry(My_NodeID(),i,node,nodeHash)
+              fingerTable(i).setNodeID(My_NodeID(node))
+              Predecessor!Update_Finger_Entry(My_NodeID(),i,node,nodeid)
             }
         }else{
           val target=closest_preceding_finger(before)
-          target!Update_Finger_Entry(before,i,node,nodeHash)
+          target!Update_Finger_Entry(before,i,node,nodeid)
         }
       }
     }
@@ -284,7 +290,7 @@ class Peer(nodeID : Long) extends Actor{
 
     case Find(node:ActorRef,key:Long, hop:Int, msgcount:Int)=>{
       var interval = new Interval(false, My_NodeID(Predecessor), My_NodeID(), true)
-      val interval2 = new Interval(false, My_NodeID(), fingerTable(0).get_NodeID(), true)
+      val interval2 = new Interval(false, My_NodeID(), fingerTable(0).getNodeID(), true)
 
       if(interval.inValid(key))
       {
@@ -302,7 +308,6 @@ class Peer(nodeID : Long) extends Actor{
         println("------Msg " + msgcount+" Still Routing. Sent to "+My_NodeID(target))
         target!Find(node,key,hop + 1,msgcount)
       }
-      
     }
 
     case Found(key:Long,predecessor:ActorRef,successor:ActorRef,hop:Int,msgnumber:Long)=>{
@@ -332,10 +337,10 @@ class FingerProp(start: Long, interval: Interval, var node:ActorRef,var nodeID:L
   def getNode(): ActorRef = {
     return this.node
   }
-  def Set_NodeID(newnodeid :Long):Unit={
+  def setNodeID(newnodeid :Long):Unit={
      this.nodeID = newnodeid
   }
-  def get_NodeID():Long={
+  def getNodeID():Long={
     return this.nodeID
   }
   def setNode(newNode:ActorRef):Unit ={
