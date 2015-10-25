@@ -1,0 +1,83 @@
+[33mcommit c85690004374d78d2ba2a2e86b017ac3e292057f[m
+Author: sokupa <souravparmar@gmail.com>
+Date:   Sun Oct 25 00:16:23 2015 -0400
+
+    version 1.1
+
+[33mcommit a146b06830438b335ca390bca8bce646a553dde7[m
+Author: sokupa <souravparmar@gmail.com>
+Date:   Sat Oct 24 23:35:18 2015 -0400
+
+    main class modified
+
+[33mcommit 364d74fb05b646063cb17c13474f9e58eaabef98[m
+Author: sokupa <souravparmar@gmail.com>
+Date:   Sat Oct 24 23:17:09 2015 -0400
+
+    working
+
+[33mcommit 99056947356cbbdb78969700bebaefd107b2c511[m
+Author: sokupa <souravparmar@gmail.com>
+Date:   Fri Oct 23 18:37:15 2015 -0400
+
+    Logs
+
+[33mcommit 8e36de8eebbed7904917ace76927c4ab844400ea[m
+Author: sokupa <souravparmar@gmail.com>
+Date:   Fri Oct 23 17:01:59 2015 -0400
+
+    Merged Code
+
+[33mcommit b15a250f69e22164744255611bc1f124bebc0b7a[m
+Author: pp511 <pp511@github.com>
+Date:   Fri Oct 23 16:01:06 2015 -0400
+
+    Update Others implemented
+
+[33mcommit 08e2d633236009841a2b64d2e376ea1d5d456d64[m
+Author: pp511 <pp511@github.com>
+Date:   Thu Oct 22 20:29:31 2015 -0400
+
+    Self Update Implemented
+
+[33mcommit 6b282a94fd3d9fb9138a8cc356940e8818ff3122[m
+Author: pp511 <pp511@github.com>
+Date:   Thu Oct 22 13:05:54 2015 -0400
+
+    Initialize finger table Updated. Interval function missing.
+
+[33mcommit ec5a760abf978326e6d864c101e2716d4cb3c24d[m
+Author: pp511 <pp511@github.com>
+Date:   Wed Oct 21 16:48:29 2015 -0400
+
+    Check Successor Implemented
+
+[33mcommit 22917cccae17c8dc7b493ac1a26720dc52acf1e4[m
+Author: sokupa <souravparmar@gmail.com>
+Date:   Tue Oct 20 23:51:50 2015 -0400
+
+     update architecture
+
+[33mcommit 9b850926d980ea035639b44f2b5163d94246ac60[m
+Author: sokupa <souravparmar@gmail.com>
+Date:   Tue Oct 20 18:43:41 2015 -0400
+
+    SHA-1
+
+[33mcommit b34f61aec22c2211cf1fe83941e417d0ebbdde49[m
+Author: sokupa <souravparmar@gmail.com>
+Date:   Tue Oct 20 15:41:11 2015 -0400
+
+    Removed build errors
+
+[33mcommit 6ed00eebdc2031f42137b3aa88f25edc014d78ab[m
+Author: sokupa <souravparmar@gmail.com>
+Date:   Tue Oct 20 15:34:45 2015 -0400
+
+     include build.sbt
+
+[33mcommit 3a98854d457bc9741d282e088943c3875feed188[m
+Author: sokupa <souravparmar@gmail.com>
+Date:   Tue Oct 20 15:33:52 2015 -0400
+
+    First checkin

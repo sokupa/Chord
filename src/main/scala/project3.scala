@@ -18,11 +18,15 @@ case class m_FindMsgTarget(node:ActorRef,code:String, Hop:Int)
 case class m_FoundMsgTarget(code: String,predecessor:ActorRef,successor:ActorRef,Hop:Int)
 case class m_setPredecessor(node:ActorRef)
 case class m_setSuccessor(node:ActorRef)
+case class Find(node:ActorRef,key:Long, hop:Int, msgcount:Int)
+case class Found(key:Long,predecessor:ActorRef,successor:ActorRef,hop:Int,msgnumber:Long)
 case object Print
+      
+
 
 object Global {
     var nodemap = new HashMap[Long, ActorRef]
-     val max_len =4
+     val max_len =8
      val m_maxnodes:Long = math.pow(2,max_len).toLong
      }
 
@@ -50,18 +54,20 @@ object Main extends App{
     var averageHopCount = 0.0f 
     var retrycount:Int = 0   
     var refNode : ActorRef = null
+    var hopcount : Int =0
+    var nodeset = scala.collection.mutable.Set[Long]()
+
     def receive = {
       case "createNetwork"=>{
           println("Network create initiating \n") 
 
        val system1 = ActorSystem("Worker")
-       var nodeset = scala.collection.mutable.Set[Long]()
                   while(nodeset.size != numofnodes)
                   {
                      nodeset += consistenthash(Random.nextInt(2000000))
                    }
                   for( i<-0 until numofnodes){  
-                     Thread.sleep(100)          
+                   //  Thread.sleep(10)          
                      try { 
                             nodeID = nodeset.toVector(i)
                             node = (system1.actorOf(Props(new Peer(nodeID)),name = getmyname(nodeID))) 
@@ -87,6 +93,8 @@ object Main extends App{
                          } 
                     Global.nodemap.put(nodeID,node)
                   }
+
+
            }
       
       case "m_Joined" => {
@@ -94,12 +102,43 @@ object Main extends App{
            numm_Joined = numm_Joined + 1
             if(numm_Joined == numofnodes - 1){
               println("m_Joined " + numm_Joined)
-                   refNode ! Print
+                  // refNode ! Print
+                  Send_Messages()
+
+        }
+      }
+        
+
+
+      case Found(key:Long,predecessor:ActorRef,successor:ActorRef,hop:Int,msgnumber:Long)=>{
+          println("Found  "+key+" at "+successor)
+          hopcount = hopcount + hop
+          if(msgnumber == numRequest*numofnodes)
+          {
+            println("All the messages sucessfully routed to their destination.")
+            println("Average Hop Count for a Network of Size"+Global.m_maxnodes+ "is -->"+hopcount/numRequest)
+
+          }
+    }
+  }  
+    
+  def Send_Messages() ={
+            var msgsent:Int =0
+            for( i<-0 until numRequest)
+            { 
+              for(j<-0 until numofnodes)
+              {   msgsent = msgsent +1
+                 nodeID = nodeset.toVector(j)
+                 node = Global.nodemap(nodeID)
+                 val msg:Long = consistenthash(Random.nextInt(1000000))
+                //  println("Send_Messages to"+node)
+                  Thread.sleep(1000)
+                 node ! Find(node,msg,0,msgsent)
+              }
+                 
+            }
         }
 
-      }
-      case _ => 
-    }
    def consistenthash(index:Int): Long={
     var index1:String = index.toString
     var sha:String = ""
@@ -124,13 +163,13 @@ object Main extends App{
     return res
     */
     
-    val loop:Int = 1 
+    val loop:Int = 2 
     //println(loop)
     var res: Long = 0
     for(i<-0 to loop-1)
        res = (res << 4 ) | Character.digit(sha.charAt(i), 16);
     
-    res = res & 0xF /*Fetching first 14 bits in resultant string*/
+    res = res & 0xFF /*Fetching first 14 bits in resultant string*/
   //  res = res >> 1
     //println(res)
     return res
@@ -237,7 +276,7 @@ class Peer(nodeID : Long) extends Actor{
     }
 
     case Found_Finger_Entry(i:Int,successor:ActorRef)=>{
-      println("Node    " +My_NodeID(self) +"Found_Finger_Entry Entry at "+i+ "is "+My_NodeID(successor))
+     // println("Node    " +My_NodeID(self) +"Found_Finger_Entry Entry at "+i+ "is "+My_NodeID(successor))
       this.fingerTable(i).setNode(successor)
       this.fingerTable(i).Set_NodeID(My_NodeID(successor))
     }
@@ -269,7 +308,7 @@ class Peer(nodeID : Long) extends Actor{
         if (interval1.inValid(before)) {
             val interval2=new Interval(false, My_NodeID(), fingerTable(i).get_NodeID(), false)
             if(interval2.inValid(nodeHash)){
-            println("Node    " +My_NodeID(self) +"Update_Finger_Entry Entry at "+i+ " is "+My_NodeID(node))
+           // println("Node    " +My_NodeID(self) +"Update_Finger_Entry Entry at "+i+ " is "+My_NodeID(node))
               fingerTable(i).setNode(node)
               fingerTable(i).Set_NodeID(My_NodeID(node))
               Predecessor!Update_Finger_Entry(My_NodeID(),i,node,nodeHash)
@@ -289,6 +328,31 @@ class Peer(nodeID : Long) extends Actor{
       this.Successor=node
     }
 
+    case Find(node:ActorRef,key:Long, hop:Int, msgcount:Int)=>{
+      var interval = new Interval(false, My_NodeID(Predecessor), My_NodeID(), true)
+      val interval2 = new Interval(false, My_NodeID(), fingerTable(0).get_NodeID(), true)
+
+      if(interval.inValid(key))
+      {
+        println("msgcount ----- Ended" + msgcount + "Message Send to"+self)
+
+        sender!Found(key,Predecessor,self,hop,msgcount)
+      }
+      else if(interval2.inValid(key))
+      {
+        println("msgcount "+msgcount+"Message Send to "+Successor)
+
+        sender!Found(key,self,Successor,hop + 1,msgcount)
+      }
+     else
+      {
+         println("msgcount Still Routing" + msgcount + "Message Send to"+self)
+        val target=closest_preceding_finger(key)
+        target!Find(node,key,hop + 1,msgcount)
+      }
+      
+    }
+
     case Print =>{
       println("============================================")
       println("Node: %s".format(self.toString()))
@@ -302,7 +366,7 @@ class Peer(nodeID : Long) extends Actor{
       println("============================================")
      
     }
-    Thread.sleep(1000)
+    Thread.sleep(10)
     Successor ! Print
   }
 
