@@ -4,11 +4,10 @@ import java.security.MessageDigest
 import scala.util.Random
 import scala.collection.mutable.HashMap
 import akka.util.Timeout
-//import java.math.Longeger
 import scala.collection.immutable.{TreeMap, List}
 
 
-case class m_Firstm_Join(nodeid : Long)
+case class m_FirstJoin()
 case class m_Join(asknode:ActorRef)
 case class m_locateposition(node:ActorRef,nodeHash:Long)
 case class m_nodePosLocated(predecessor:ActorRef,successor:ActorRef)
@@ -61,17 +60,17 @@ object Main extends App{
                   {
                      nodeset += consistenthash(Random.nextInt(2000000))
                    }
-                  for( i<-0 to numofnodes-1){  
+                  for( i<-0 until numofnodes){  
                      Thread.sleep(100)          
                      try { 
-                            nodeID = consistenthash(Random.nextInt(2000000))
+                            nodeID = nodeset.toVector(i)
                             node = (system1.actorOf(Props(new Peer(nodeID)),name = getmyname(nodeID))) 
                                          // ...
                       } catch {
                         case e: Exception => {
                           if(retrycount < 10){
                             println("Actor name clash trying max try again")
-                          nodeID = consistenthash(Random.nextInt(2000000))
+                            nodeID = consistenthash(Random.nextInt(2000000))
                             node = (system1.actorOf(Props(new Peer(nodeID)),name = getmyname(nodeID))) 
                             retrycount = retrycount +1
                           }
@@ -148,14 +147,7 @@ class Peer(nodeID : Long) extends Actor{
      var refNode : ActorRef=null
      var m_maxnodes : Long = Global.m_maxnodes
      val m : Int = Global.max_len
- def fingertableinit ():Unit={
-  for(i <-0 until m) {
-    val start=(My_NodeID()+(math.pow(2, i)).toLong) % m_maxnodes
-    val end=(My_NodeID()+(math.pow(2, i+1) ).toLong)% m_maxnodes
-    val interval= new Interval(true, start,end, false)
-    fingerTable(i)= new FingerProp(start,interval,self,nodeID)
-  }
-}
+
   fingertableinit()
   def My_NodeID():Long={
           val pattern = "([0-9]+)".r
@@ -209,8 +201,19 @@ class Peer(nodeID : Long) extends Actor{
     }
   }
 
+ def fingertableinit ():Unit={
+  for(i <-0 until m) {
+    val start=(My_NodeID()+(math.pow(2, i)).toLong) % m_maxnodes
+    val end=(My_NodeID()+(math.pow(2, i+1) ).toLong)% m_maxnodes
+    val interval= new Interval(true, start,end, false)
+    fingerTable(i)= new FingerProp(start,interval,self,nodeID)
+  }
+}
 
   override def receive: Receive ={
+    case m_FirstJoin()=>{
+      sender ! "m_Joined"
+    }
 
     case m_Join(asknode:ActorRef)=>{
       println("m_Join")
@@ -228,7 +231,6 @@ class Peer(nodeID : Long) extends Actor{
       println(" self "+My_NodeID(self)+" Successor "+My_NodeID(Successor)+ " Predecessor "+ My_NodeID(Predecessor))
       init_finger_table()
       //println("Finger Initiated")
-
       update_others()
      // println("Others Updated")
       sender ! "m_Joined"
@@ -260,10 +262,11 @@ class Peer(nodeID : Long) extends Actor{
         target!Find_Finger_Entry(node,i,start)
       }
     }
+
     case Update_Finger_Entry(before:Long,i:Int,node:ActorRef,nodeHash:Long)=>{
       if(node!=self) {
         val interval1 = new Interval(false, My_NodeID(), fingerTable(0).get_NodeID(), true)
-        if (interval1.inValid(before)) { //I am the node just before N-2^i
+        if (interval1.inValid(before)) {
             val interval2=new Interval(false, My_NodeID(), fingerTable(i).get_NodeID(), false)
             if(interval2.inValid(nodeHash)){
             println("Node    " +My_NodeID(self) +"Update_Finger_Entry Entry at "+i+ " is "+My_NodeID(node))
@@ -302,6 +305,7 @@ class Peer(nodeID : Long) extends Actor{
     Thread.sleep(1000)
     Successor ! Print
   }
+
 }
 
 
