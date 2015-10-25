@@ -443,7 +443,7 @@
 [0m[[0mdebug[0m] [0m	[NOT REQUIRED] org.scala-lang#scala-reflect;2.10.1!scala-reflect.jar[0m
 [0m[[0mdebug[0m] [0m	[NOT REQUIRED] org.scala-lang#jline;2.10.1!jline.jar[0m
 [0m[[0mdebug[0m] [0m	[NOT REQUIRED] org.fusesource.jansi#jansi;1.4!jansi.jar[0m
-[0m[[0mdebug[0m] [0m:: resolution report :: resolve 2515ms :: artifacts dl 105ms[0m
+[0m[[0mdebug[0m] [0m:: resolution report :: resolve 2876ms :: artifacts dl 73ms[0m
 [0m[[0mdebug[0m] [0m	report for default#chord_2.10;1.0 compile produced in /home/sokupa/workspace/CHord new/Chord/target/resolution-cache/reports/default-chord_2.10-compile.xml[0m
 [0m[[0mdebug[0m] [0m	report for default#chord_2.10;1.0 runtime produced in /home/sokupa/workspace/CHord new/Chord/target/resolution-cache/reports/default-chord_2.10-runtime.xml[0m
 [0m[[0mdebug[0m] [0m	report for default#chord_2.10;1.0 test produced in /home/sokupa/workspace/CHord new/Chord/target/resolution-cache/reports/default-chord_2.10-test.xml[0m
@@ -457,5 +457,5 @@
 [0m[[0mdebug[0m] [0m	report for default#chord_2.10;1.0 docs produced in /home/sokupa/workspace/CHord new/Chord/target/resolution-cache/reports/default-chord_2.10-docs.xml[0m
 [0m[[0mdebug[0m] [0m	report for default#chord_2.10;1.0 pom produced in /home/sokupa/workspace/CHord new/Chord/target/resolution-cache/reports/default-chord_2.10-pom.xml[0m
 [0m[[0mdebug[0m] [0m	report for default#chord_2.10;1.0 scala-tool produced in /home/sokupa/workspace/CHord new/Chord/target/resolution-cache/reports/default-chord_2.10-scala-tool.xml[0m
-[0m[[0mdebug[0m] [0m	resolve done (2515ms resolve - 105ms download)[0m
+[0m[[0mdebug[0m] [0m	resolve done (2876ms resolve - 73ms download)[0m
 [0m[[0minfo[0m] [0mDone updating.[0m

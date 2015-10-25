@@ -1,4 +1,4 @@
-[0m[[0minfo[0m] [0mRunning start 8 1[0m
+[0m[[0minfo[0m] [0mRunning Main 7 1[0m
 [0m[[0mdebug[0m] [0mWaiting for threads to exit or System.exit to be called.[0m
 [0m[[0mdebug[0m] [0m  Classpath:[0m
 [0m[[0mdebug[0m] [0m	/home/sokupa/workspace/CHord new/Chord/target/scala-2.10/classes[0m
@@ -13,4 +13,6 @@
 [0m[[0mdebug[0m] [0m	Thread run-main-0 exited.[0m
 [0m[[0mdebug[0m] [0mWaiting for thread Chordsimulator-akka.actor.default-dispatcher-2 to terminate.[0m
 [0m[[0mdebug[0m] [0m	Thread Chordsimulator-akka.actor.default-dispatcher-2 exited.[0m
-[0m[[0mdebug[0m] [0mWaiting for thread Chordsimulator-akka.actor.default-dispatcher-4 to terminate.[0m
+[0m[[0mdebug[0m] [0mWaiting for thread Chordsimulator-akka.actor.default-dispatcher-5 to terminate.[0m
+[0m[[0mdebug[0m] [0m	Thread Chordsimulator-akka.actor.default-dispatcher-5 exited.[0m
+[0m[[0mdebug[0m] [0mWaiting for thread Chordsimulator-scheduler-1 to terminate.[0m
