@@ -70,8 +70,8 @@ object Main extends App{
                   for( i<-0 to numofnodes-1){  
                      Thread.sleep(100)          
                      try { 
-                           // nodeid = consistenthash(Random.nextInt(2000000))
-                            nodeID = nodeset.toVector(i)
+                            nodeID = consistenthash(Random.nextInt(2000000))
+                            //nodeID = nodeset.toVector(i)
                             node = (system1.actorOf(Props(new Peer(nodeID)),name = getmyname(nodeID))) 
                                          // ...
                       } catch {
@@ -84,10 +84,19 @@ object Main extends App{
                           }
                       }                   
                      }
+                     if(i==0)
+                        {
+                          refNode = node
+                        }
+                        else
+                        {    
+                         node ! Join(refNode)  
+                            Thread.sleep(100) 
+                         } 
                     Global.nodemap.put(nodeID,node)
                   }
                    // println(" i"+i)
-                    for( i<-0 to numofnodes-1){ 
+                    /*for( i<-0 to numofnodes-1){ 
                      
                        var nodeID = nodeset.toVector(i) 
                     //   node =  Global.nodemap.get(nodeID)
@@ -101,7 +110,7 @@ object Main extends App{
                          node ! Join(refNode)  
                             Thread.sleep(100) 
                          } 
-                      }
+                      }*/
 
        }
       
