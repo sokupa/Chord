@@ -1,11 +1,9 @@
 /**************************************************************************************************************
 *************************Chord Protocol Implementation*************************************************************
 *Instuctions to Run: 
-*As server: sbt "project project3" "run <num of nodes><num of request>" **** run sbt on server directory
-*As client: sbt "project client" "192.108.0.13" Replace it with source ip **** run sbt on client directory******
-*use application.conf to change server ip or client Ip 
+*Execute the following command from SBT bild directory: sbt "project project3" "run <num of nodes><num of request>" 
 *Publisher: Souav kumar parmar 
-*       Priyanshu Pandey
+*           Priyanshu Pandey
 ****************************************************************************************************************/
 import akka.actor.{Actor, ActorRef, ActorSystem, Props, PoisonPill}
 import java.security.MessageDigest
@@ -32,6 +30,8 @@ object Global {
      val m_maxnodes:Long = math.pow(2,max_len).toLong
      }
 
+
+
 object Main extends App{
      if(args.length == 2) {
        var m_numofnodes = args(0).toInt
@@ -44,6 +44,12 @@ object Main extends App{
        println("Input in format should be : <numofnodes> <numRequest>")
   }
 
+/********************************************************************************************
+*class ChordNetwork: Works as master worker 
+*    createNetwork: Creates the network by joining nodes on at a time.
+*    Send_Messages: Initiates message lookup once the network is created.
+*    consistenthash: Calculates the SHA1 hash and truncates it to m bits.
+ ********************************************************************************************/
   class ChordNetwork(numofnodes:Int , numRequest: Int ) extends Actor {
     var numm_Joined:Int = 0
     var nodeID : Long = 0
@@ -92,7 +98,7 @@ object Main extends App{
       case "m_Joined" => {
            numm_Joined = numm_Joined + 1
             if(numm_Joined == numofnodes - 1){
-              println("m_Joined " + numm_Joined)
+             // println("m_Joined " + numm_Joined)
                   Send_Messages()// All nodes have been added to the network. Initiate message passing.
 
         }
@@ -136,6 +142,18 @@ object Main extends App{
    }
 
  }
+
+ /********************************************************************************************
+*class ChordNetwork: Works as master worker 
+*m_FirstJoin : Initializes the class members for the first node.
+*m_Join: Adds a new node by requesting the bootstrap node.
+*m_locateposition: Finds the predecessor and successor of a newly add node.
+*m_nodePosLocated : Notified once successor and predecessor are successfully located for a newly joined node.
+*m_setPredecessor: Set predecessor of crrent node
+*m_setSuccessor: Set predecessor of crrent node
+*Find: Finds the key in in the peers.
+*Found: Reports the Average hop count.
+ ********************************************************************************************/
 
 class Peer(nodeID : Long) extends Actor{
   var fingerTable = new Array[FingerProp](Global.max_len) 
@@ -294,12 +312,12 @@ class Peer(nodeID : Long) extends Actor{
 
       if(interval.inValid(key))
       {
-        println("Msg "+ msgcount +" Routed. Key found at "+My_NodeID())
+        println("Msg "+ msgcount +" Routed. Key located at "+My_NodeID())
         refNode!Found(key,Predecessor,self,hop,msgcount)
       }
       else if(interval2.inValid(key))
       {
-        println("Msg "+ msgcount +" Routed. Key found at "+My_NodeID(Successor))
+        println("Msg "+ msgcount +" Routed. Key located at "+My_NodeID(Successor))
         refNode!Found(key,self,Successor,hop + 1,msgcount)
       }
      else
@@ -311,7 +329,7 @@ class Peer(nodeID : Long) extends Actor{
     }
 
     case Found(key:Long,predecessor:ActorRef,successor:ActorRef,hop:Int,msgnumber:Long)=>{
-          println("Destination of Key "+key+" found at \n"+My_NodeID(successor))
+         // println("Destination of Key "+key+" found at "+My_NodeID(successor))
           hopcount = hopcount + hop
           if(msgnumber == numRequest*numofnodes)
           {
@@ -347,6 +365,12 @@ class FingerProp(start: Long, interval: Interval, var node:ActorRef,var nodeID:L
     this.node=newNode
   }
 }
+
+
+ /********************************************************************************************
+*class ChordNetwork: Works as master worker 
+*inValid : Checks if a given nodeid lies is in the given interval.
+ ********************************************************************************************/
 
 class Interval(includeStart:Boolean,start:Long,end:Long, includeEnd:Boolean){
   def inValid(nodetobefound:Long): Boolean = { 
