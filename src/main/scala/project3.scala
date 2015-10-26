@@ -312,18 +312,18 @@ class Peer(nodeID : Long) extends Actor{
 
       if(interval.inValid(key))
       {
-        println("Msg "+ msgcount +" Routed. Key located at "+My_NodeID())
+        println("Msg "+ msgcount +" Routed Key located at "+My_NodeID())
         refNode!Found(key,Predecessor,self,hop,msgcount)
       }
       else if(interval2.inValid(key))
       {
-        println("Msg "+ msgcount +" Routed. Key located at "+My_NodeID(Successor))
+        println("Msg "+ msgcount +" Routed Key located at "+My_NodeID(Successor))
         refNode!Found(key,self,Successor,hop + 1,msgcount)
       }
      else
       {
         val target=closest_preceding_finger(key)
-        println("------Msg " + msgcount+" Still Routing. Sent to "+My_NodeID(target))
+        println("------Msg " + msgcount+" Still Routing Sent to "+My_NodeID(target))
         target!Find(node,key,hop + 1,msgcount)
       }
     }
@@ -334,12 +334,14 @@ class Peer(nodeID : Long) extends Actor{
           if(msgnumber == numRequest*numofnodes)
           {
            var finalaverage :Double = hopcount.toDouble/msgnumber.toDouble
-            println("**********************************************************")
-            println("**********************************************************")
+            println("**************************************************************")
+            println("**************************************************************")
             println("All the messages sucessfully routed to their destination.")
-            println("Average Hop Count is -->**** "+finalaverage+" ************")
-            println("**********************************************************")
-            println("**********************************************************")
+            println("Number of Requests for each node  "+numRequest+"   Total number of nodes  "+numofnodes)
+            println("")
+            println("Average Hop Count is **************** "+finalaverage+" *******************")
+            println("**************************************************************")
+            println("**************************************************************")
           }
     }
   }
